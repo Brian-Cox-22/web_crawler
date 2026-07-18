@@ -1,0 +1,125 @@
+import unittest
+from crawl import normalize_url, get_heading_from_html, get_first_paragraph_from_html
+
+class TestCrawl(unittest.TestCase):
+    def test_normalize_url(self):
+        input_url = "https://www.boot.dev/blog/path"
+        actual = normalize_url(input_url)
+        expected = "www.boot.dev/blog/path"
+        self.assertEqual(actual, expected)
+    
+    def test_normalize_url_2(self):
+        input_url = "http://www.boot.dev/blog/path/"
+        actual = normalize_url(input_url)
+        expected = "www.boot.dev/blog/path"
+        self.assertEqual(actual, expected)
+    
+    def test_normalize_url_capitals(self) -> None:
+        input_url = "https://CRAWLER-TEST.com/path"
+        actual = normalize_url(input_url)
+        expected = "crawler-test.com/path"
+        self.assertEqual(actual, expected)
+    
+    def test_get_header(self):
+        input_html = '''
+<html>
+  <body>
+    <h1>Welcome to Boot.dev</h1>
+    <main>
+      <p>Learn to code by building real projects.</p>
+      <p>This is the second paragraph.</p>
+    </main>
+  </body>
+</html>
+'''
+        expected_header = "Welcome to Boot.dev"
+        actual_header = get_heading_from_html(input_html)
+        self.assertEqual(actual_header, expected_header)
+    
+    def test_get_header_no_h1(self):
+        input_html = '''
+<html>
+  <body>
+    <h2>Welcome to Boot.dev</h2>
+    <main>
+      <p>Learn to code by building real projects.</p>
+      <p>This is the second paragraph.</p>
+    </main>
+  </body>
+</html>
+'''
+        expected_header = "Welcome to Boot.dev"
+        actual_header = get_heading_from_html(input_html)
+        self.assertEqual(actual_header, expected_header)
+    
+    def test_get_header_no_h1_or_h2(self):
+        input_html = '''
+<html>
+  <body>
+    <main>
+      <p>Empty</p>
+      <p>This is the second paragraph.</p>
+    </main>
+  </body>
+</html>
+'''
+        expected_header = ""
+        actual_header = get_heading_from_html(input_html)
+        self.assertEqual(actual_header, expected_header)
+    
+    def test_get_heading_from_html_with_whitespace(self) -> None:
+        input_body = "<html><body><h1>   Whitespace Title   </h1></body></html>"
+        actual = get_heading_from_html(input_body)
+        expected = "Whitespace Title"
+        self.assertEqual(actual, expected)
+
+    def test_get_first_paragraph_from_html_main_priority(self):
+        input_body = '''<html><body>
+            <p>Outside paragraph.</p>
+            <main>
+                <p>Main paragraph.</p>
+            </main>
+        </body></html>'''
+        actual = get_first_paragraph_from_html(input_body)
+        expected = "Main paragraph."
+        self.assertEqual(actual, expected)
+    
+    def test_get_first_paragraph_from_html_multiple_p(self):
+        input_html = '''
+<html>
+  <body>
+    <main>
+      <p>First Paragraph</p>
+      <p>This is the second paragraph.</p>
+    </main>
+  </body>
+</html>
+'''
+        expected = "First Paragraph"
+        actual = get_first_paragraph_from_html(input_html)
+        self.assertEqual(actual, expected)
+      
+    def test_first_paragraph_from_html_no_main(self):
+        input_html = '''
+<html>
+  <body>
+      <p>First Paragraph</p>
+      <p>This is the second paragraph.</p>
+  </body>
+</html>
+'''
+        expected = "First Paragraph"
+        actual = get_first_paragraph_from_html(input_html)
+        self.assertEqual(actual, expected)
+    
+    def test_get_first_paragraph_from_html_no_paragraph(self) -> None:
+        input_body = "<html><body><h1>No paragraphs here</h1></body></html>"
+        actual = get_first_paragraph_from_html(input_body)
+        expected = ""
+        self.assertEqual(actual, expected)
+    
+
+
+
+if __name__ == "__main__":
+    unittest.main()
