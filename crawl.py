@@ -32,20 +32,23 @@ def get_first_paragraph_from_html(html: str) -> str:
     except:
         return ""
 
+def normailize_urls(links: list, base_url: str) -> list:
+    absolute_links = []
+
+    for link in links:
+        if link.startswith(base_url):
+            absolute_links.append(link)
+        else:
+            absolute_links.append(urljoin(base_url, link))
+    
+    return absolute_links
+
 
 def get_urls_from_html(html, base_url):
     '''
     html is an HTML string
     base_url is the root URL of the website we're crawling
     It returns an un-normalized list of all the URLs found within the HTML, or an error if one occurs.
-    '''
-
-    '''
-    Structure:
-        relative url->absolute url (add base_url)
-    
-    need to find all of the <a> tags (use .find_all() method from BeautifulSoup)
-    
     '''
     soup = BeautifulSoup(html, features = "html.parser")
     a_tags = soup.find_all("a")
@@ -55,6 +58,7 @@ def get_urls_from_html(html, base_url):
         if "href" in tag.attrs:
             links.append(tag.attrs["href"])
     
+    '''
     absolute_links = []
 
     for link in links:
@@ -63,5 +67,23 @@ def get_urls_from_html(html, base_url):
         else:
             absolute_links.append(urljoin(base_url, link))
     
-    # print(absolute_links)
     return absolute_links
+    '''
+    return normailize_urls(links, base_url)
+
+def get_images_from_html(html, base_url):
+    '''
+    html is an HTML string
+    base_url is the root URL of the website we're crawling
+    Returns an un-normalized list of all the image URLs found within the HTML, and an error if one occurs.
+    '''
+    soup = BeautifulSoup(html, "html.parser")
+    imgs = soup.find_all("img")
+    print(imgs)
+    output = []
+    for img in imgs:
+        output.append(img.get("src"))
+    
+    return normailize_urls(output, base_url)
+
+
