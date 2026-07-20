@@ -1,5 +1,5 @@
 import unittest
-from crawl import normalize_url, get_heading_from_html, get_first_paragraph_from_html
+from crawl import normalize_url, get_heading_from_html, get_first_paragraph_from_html, get_urls_from_html
 
 class TestCrawl(unittest.TestCase):
     def test_normalize_url(self):
@@ -117,6 +117,41 @@ class TestCrawl(unittest.TestCase):
         actual = get_first_paragraph_from_html(input_body)
         expected = ""
         self.assertEqual(actual, expected)
+    
+    def test_get_urls_from_html_absolute(self):
+      input_url = "https://crawler-test.com"
+      input_body = '<html><body><a href="https://crawler-test.com"><span>Boot.dev</span></a></body></html>'
+      actual = get_urls_from_html(input_body, input_url)
+      expected = ["https://crawler-test.com"]
+      self.assertEqual(actual, expected)
+    
+    def test_get_urls_from_html_relative(self):
+      input_url = "https://crawler-test.com"
+      input_body = '<html><body><a href="/funky_wunky"><span>Boot.dev</span></a></body></html>'
+      actual = get_urls_from_html(input_body, input_url)
+      expected = ["https://crawler-test.com/funky_wunky"]
+      self.assertEqual(actual, expected)
+    
+    def test_get_urls_from_html_multiple_a(self):
+      input_url = "https://crawler-test.com"
+      input_body = '''
+<html>
+  <body>
+    <h1>Test Page</h1>
+    <p>Here are some links:</p>
+
+    <a href="https://crawler-test.com/test_1">Example</a>
+    <a href="https://crawler-test.com/test_2">Boot.dev</a>
+    <a href="/about">About Us</a>
+    <a href="contact.html">Contact</a>
+  </body>
+</html>
+'''
+      actual = get_urls_from_html(input_body, input_url)
+      expected = ["https://crawler-test.com/test_1", "https://crawler-test.com/test_2", 
+                  "https://crawler-test.com/about", "https://crawler-test.com/contact.html"]
+      self.assertEqual(actual, expected)
+
     
 
 
