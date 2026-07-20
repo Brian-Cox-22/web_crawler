@@ -44,46 +44,41 @@ def normailize_urls(links: list, base_url: str) -> list:
     return absolute_links
 
 
-def get_urls_from_html(html, base_url):
-    '''
-    html is an HTML string
-    base_url is the root URL of the website we're crawling
-    It returns an un-normalized list of all the URLs found within the HTML, or an error if one occurs.
-    '''
-    soup = BeautifulSoup(html, features = "html.parser")
-    a_tags = soup.find_all("a")
-    links = []
-    for tag in a_tags:
-        # print(tag.attrs)
-        if "href" in tag.attrs:
-            links.append(tag.attrs["href"])
-    
-    '''
-    absolute_links = []
-
-    for link in links:
-        if link.startswith(base_url):
-            absolute_links.append(link)
-        else:
-            absolute_links.append(urljoin(base_url, link))
-    
-    return absolute_links
-    '''
-    return normailize_urls(links, base_url)
-
-def get_images_from_html(html, base_url):
-    '''
-    html is an HTML string
-    base_url is the root URL of the website we're crawling
-    Returns an un-normalized list of all the image URLs found within the HTML, and an error if one occurs.
-    '''
+def get_urls_from_html(html: str, base_url: str) -> list[str]:
+    urls = []
     soup = BeautifulSoup(html, "html.parser")
-    imgs = soup.find_all("img")
-    print(imgs)
-    output = []
-    for img in imgs:
-        output.append(img.get("src"))
-    
-    return normailize_urls(output, base_url)
+    anchors = soup.find_all("a")
+
+    for anchor in anchors:
+        if not isinstance(anchor, Tag):
+            continue
+        href = anchor.get("href")
+        if isinstance(href, str) and href:
+            try:
+                absolute_url = urljoin(base_url, href)
+                urls.append(absolute_url)
+            except Exception as e:
+                print(f"{str(e)}: {href}")
+
+    return urls
+
+
+def get_images_from_html(html: str, base_url: str) -> list[str]:
+    image_urls = []
+    soup = BeautifulSoup(html, "html.parser")
+    images = soup.find_all("img")
+
+    for img in images:
+        if not isinstance(img, Tag):
+            continue
+        src = img.get("src")
+        if isinstance(src, str) and src:
+            try:
+                absolute_url = urljoin(base_url, src)
+                image_urls.append(absolute_url)
+            except Exception as e:
+                print(f"{str(e)}: {src}")
+
+    return image_urls
 
 
