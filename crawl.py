@@ -1,5 +1,6 @@
 from urllib.parse import urlsplit, urljoin
 from bs4 import BeautifulSoup, Tag
+from typing import TypedDict
 
 
 def normalize_url(url):
@@ -32,19 +33,14 @@ def get_first_paragraph_from_html(html: str) -> str:
     except:
         return ""
 
-def normailize_urls(links: list, base_url: str) -> list:
-    absolute_links = []
 
-    for link in links:
-        if link.startswith(base_url):
-            absolute_links.append(link)
-        else:
-            absolute_links.append(urljoin(base_url, link))
-    
-    return absolute_links
 
 
 def get_urls_from_html(html: str, base_url: str) -> list[str]:
+    '''
+    Takes a passage of html (as a str), and a base url (of the website)
+    Returns a list of strings of valid links, including the base_url
+    '''
     urls = []
     soup = BeautifulSoup(html, "html.parser")
     anchors = soup.find_all("a")
@@ -64,6 +60,11 @@ def get_urls_from_html(html: str, base_url: str) -> list[str]:
 
 
 def get_images_from_html(html: str, base_url: str) -> list[str]:
+    '''
+    Takes a passage of html (as a str), and a base url (of the website)
+    Returns a list of strings of valid links to images, including the base_url
+    Searches based on the src tag in img objects
+    '''
     image_urls = []
     soup = BeautifulSoup(html, "html.parser")
     images = soup.find_all("img")
@@ -80,5 +81,25 @@ def get_images_from_html(html: str, base_url: str) -> list[str]:
                 print(f"{str(e)}: {src}")
 
     return image_urls
+
+def extract_page_data(html: str, page_url: str):
+    '''
+    html is an HTML string
+    page_url is the absolute URL of the page (used for converting relative URLs)
+    It returns a dictionary with keys: url, heading, first_paragraph, outgoing_links, image_urls
+    '''
+    class PageData(TypedDict):
+        url: str
+        heading: str
+        first_paragraph: str
+        outgoing_links: list[str]
+        image_urls: list[str]
+    
+    output = PageData(url=page_url, heading=get_heading_from_html(html),
+                      first_paragraph=get_first_paragraph_from_html(html),
+                      outgoing_links=get_urls_from_html(html, page_url),
+                      image_urls=get_images_from_html(html, page_url))
+
+    return output
 
 
