@@ -1,5 +1,5 @@
 import sys
-from crawl import get_html
+from crawl import crawl_page
 
 def main():
 
@@ -15,8 +15,13 @@ def main():
     
     url = sys.argv[1]
     print(f"starting crawl at {url}")
-    print(get_html(url))
-    # presumably I start actually crawing the site here
+    
+    
+    pages = crawl_page(url) # this will return a dict
+    print(f"Number of pages visited: {len(pages)}")
+    for page in pages:
+        print(page)
 
+    
 if __name__ == "__main__":
     main()

@@ -2,6 +2,7 @@ from urllib.parse import urlsplit, urljoin
 from bs4 import BeautifulSoup, Tag
 from typing import TypedDict
 import requests
+from typing import Optional
 
 
 def normalize_url(url):
@@ -83,18 +84,20 @@ def get_images_from_html(html: str, base_url: str) -> list[str]:
 
     return image_urls
 
+class PageData(TypedDict):
+    url: str
+    heading: str
+    first_paragraph: str
+    outgoing_links: list[str]
+    image_urls: list[str]
+
+
 def extract_page_data(html: str, page_url: str):
     '''
     html is an HTML string
     page_url is the absolute URL of the page (used for converting relative URLs)
     It returns a dictionary with keys: url, heading, first_paragraph, outgoing_links, image_urls
     '''
-    class PageData(TypedDict):
-        url: str
-        heading: str
-        first_paragraph: str
-        outgoing_links: list[str]
-        image_urls: list[str]
     
     output = PageData(url=page_url, heading=get_heading_from_html(html),
                       first_paragraph=get_first_paragraph_from_html(html),
@@ -119,3 +122,46 @@ def get_html(url):
     return response.text
 
 
+def crawl_page(base_url: str, current_url: Optional[str] = None, page_data: Optional[dict]=None):
+    '''
+    base_url is the root URL of the website we're crawling
+    current_url is the current URL we're crawling
+    '''
+    # print(f"Base url: {base_url}")
+    print(f"Current url: {current_url}")
+
+    if not current_url:
+        current_url = base_url
+    
+    if not page_data:
+        page_data = {}
+    
+    # print(page_data.keys())
+
+    if not current_url.startswith(base_url):
+        return
+    
+    normalized_current = normalize_url(current_url)
+    
+    if normalized_current in page_data:
+            return
+    
+    # print(f"Grabbing HTML from {normalized_current}")
+    try:
+        current_html = get_html(current_url)
+    except:
+        print("Encountered a server or client side error. Returning early")
+        return
+    
+
+    # grab the html from the page, add it to the dict
+    page_data[normalized_current] = extract_page_data(current_html, current_url)
+
+    # print(page_data[normalized_current])
+    links = page_data[normalized_current]["outgoing_links"]
+
+    for link in links:
+        # print(link)
+        crawl_page(base_url, link, page_data)
+    
+    return page_data
