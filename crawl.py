@@ -1,6 +1,7 @@
 from urllib.parse import urlsplit, urljoin
 from bs4 import BeautifulSoup, Tag
 from typing import TypedDict
+import requests
 
 
 def normalize_url(url):
@@ -101,5 +102,15 @@ def extract_page_data(html: str, page_url: str):
                       image_urls=get_images_from_html(html, page_url))
 
     return output
+
+def get_html(url):
+    page = requests.get(url, headers={"User-Agent": "BootCrawler/1.0"})
+    if page.status_code >= 400:
+        raise Exception(f"Error: server or client side error {page.status_code}")
+    
+    if "text/html" not in page.headers["content-type"]:
+        raise Exception(f"Content type is {page.headers["content-type"]}, not text/html")
+    
+    return page.content
 
 
