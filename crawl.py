@@ -2,7 +2,7 @@ from urllib.parse import urlsplit, urljoin
 from bs4 import BeautifulSoup, Tag
 from typing import TypedDict
 import requests
-from typing import Optional
+# from typing import Optional
 
 
 def normalize_url(url):
@@ -122,46 +122,44 @@ def get_html(url):
     return response.text
 
 
-def crawl_page(base_url: str, current_url: Optional[str] = None, page_data: Optional[dict]=None):
-    '''
-    base_url is the root URL of the website we're crawling
-    current_url is the current URL we're crawling
-    '''
-    # print(f"Base url: {base_url}")
-    print(f"Current url: {current_url}")
-
-    if not current_url:
-        current_url = base_url
-    
-    if not page_data:
-        page_data = {}
-    
-    # print(page_data.keys())
-
-    if not current_url.startswith(base_url):
-        return
-    
-    normalized_current = normalize_url(current_url)
-    
-    if normalized_current in page_data:
-            return
-    
-    # print(f"Grabbing HTML from {normalized_current}")
+def safe_get_html(url: str) -> str | None:
     try:
-        current_html = get_html(current_url)
-    except:
-        print("Encountered a server or client side error. Returning early")
-        return
-    
+        return get_html(url)
+    except Exception as e:
+        print(f"{e}")
+        return None
 
-    # grab the html from the page, add it to the dict
-    page_data[normalized_current] = extract_page_data(current_html, current_url)
 
-    # print(page_data[normalized_current])
-    links = page_data[normalized_current]["outgoing_links"]
+def crawl_page(
+    base_url: str,
+    current_url: str | None = None,
+    page_data: dict[str, PageData] | None = None,
+) -> dict[str, PageData]:
+    if current_url is None:
+        current_url = base_url
+    if page_data is None:
+        page_data = {}
 
-    for link in links:
-        # print(link)
-        crawl_page(base_url, link, page_data)
-    
+    base_url_obj = urlsplit(base_url)
+    current_url_obj = urlsplit(current_url)
+    if current_url_obj.netloc != base_url_obj.netloc:
+        return page_data
+
+    normalized_url = normalize_url(current_url)
+
+    if normalized_url in page_data:
+        return page_data
+
+    print(f"crawling {current_url}")
+    html = safe_get_html(current_url)
+    if html is None:
+        return page_data
+
+    page_info = extract_page_data(html, current_url)
+    page_data[normalized_url] = page_info
+
+    next_urls = get_urls_from_html(html, base_url)
+    for next_url in next_urls:
+        page_data = crawl_page(base_url, next_url, page_data)
+
     return page_data

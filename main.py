@@ -17,11 +17,11 @@ def main():
     print(f"starting crawl at {url}")
     
     
-    pages = crawl_page(url) # this will return a dict
-    print(f"Number of pages visited: {len(pages)}")
-    for page in pages:
-        print(page)
+    page_data = crawl_page(url)
 
+    print(f"Found {len(page_data)} pages:")
+    for page in page_data.values():
+        print(f"- {page['url']}: {len(page['outgoing_links'])} outgoing links")
     
 if __name__ == "__main__":
     main()
